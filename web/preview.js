@@ -230,6 +230,10 @@ addEventListener("message", (e) => {
       hovered = null
       schedule()
       break
+    case "layout":
+      root.className = m.center ? "flex min-h-svh w-full items-center justify-center p-10" : ""
+      schedule()
+      break
     case "theme":
       document.documentElement.classList.toggle("dark", m.dark)
       document.documentElement.style.colorScheme = m.dark ? "dark" : "light"

@@ -72,6 +72,7 @@ const state = {
   selected: null, // start offset of the selected call
   hover: null,
   mode: "select",
+  center: false, // center the page on the canvas (examples)
   palette: [],
   examples: null,
 }
@@ -637,7 +638,7 @@ function showTab(side, value) {
 // --- documents ---
 
 async function share() {
-  const json = JSON.stringify({ code: state.code, style: state.style, base: state.base })
+  const json = JSON.stringify({ code: state.code, style: state.style, base: state.base, center: state.center })
   const stream = new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"))
   const bytes = new Uint8Array(await new Response(stream).arrayBuffer())
   let bin = ""
@@ -663,7 +664,7 @@ async function fromHash() {
 
 function save() {
   try {
-    localStorage.setItem(STORE, JSON.stringify({ code: state.code, style: state.style, base: state.base }))
+    localStorage.setItem(STORE, JSON.stringify({ code: state.code, style: state.style, base: state.base, center: state.center }))
   } catch {}
 }
 
@@ -689,7 +690,16 @@ function download() {
   URL.revokeObjectURL(a.href)
 }
 
+function setCenter(on) {
+  state.center = on
+  const t = $("center")
+  t.setAttribute("aria-pressed", String(on))
+  t.setAttribute("data-state", on ? "on" : "off")
+  frame()?.postMessage({ type: "layout", center: on }, "*")
+}
+
 function setDocument(doc) {
+  setCenter(!!doc.center)
   if (doc.style) state.style = doc.style
   if (doc.base) state.base = doc.base
   $("style").value = state.style
@@ -708,7 +718,7 @@ async function openExample(name) {
   const code = state.examples[name]
   if (!code) return
   const base = name.startsWith("aria--") ? "aria" : name.startsWith("base--") ? "base" : "radix"
-  setDocument({ code, base, style: state.style })
+  setDocument({ code, base, style: state.style, center: true })
   status(`Opened ${name}`)
 }
 
@@ -722,6 +732,7 @@ addEventListener("message", (e) => {
       previewReady()
       frame().postMessage({ type: "theme", dark: document.documentElement.classList.contains("dark") }, "*")
       frame().postMessage({ type: "mode", mode: state.mode }, "*")
+      frame().postMessage({ type: "layout", center: state.center }, "*")
       break
     case "tree":
       state.tree = m.tree
@@ -841,17 +852,23 @@ $("base").addEventListener("change", (e) => {
 
 const widths = { desktop: "100%", tablet: "768px", mobile: "390px" }
 $("viewport").addEventListener("click", (e) => {
-  const item = e.target.closest("[data-value]") ?? e.target.closest("button")
-  const v = item?.dataset.value ?? item?.getAttribute("value")
+  const v = e.target.closest("[data-pick]")?.dataset.pick
   if (v && widths[v]) $("frame").style.width = widths[v]
 })
 $("mode").addEventListener("click", (e) => {
-  const item = e.target.closest("button")
-  const v = item?.dataset.value ?? item?.getAttribute("value")
+  const v = e.target.closest("[data-pick]")?.dataset.pick
   if (v === "select" || v === "interact") {
     state.mode = v
     frame().postMessage({ type: "mode", mode: v }, "*")
   }
+})
+
+$("center").addEventListener("click", () => {
+  // The toggle's own behavior flips aria-pressed; follow it.
+  setTimeout(() => {
+    setCenter($("center").getAttribute("aria-pressed") === "true")
+    save()
+  })
 })
 
 $("theme").addEventListener("click", () => {
@@ -888,7 +905,7 @@ $("palette").addEventListener("dragstart", (e) => {
 ;(async () => {
   fetch("palette.json").then((r) => r.json()).then((p) => (state.palette = p))
   const doc = (await fromHash()) ?? load() ?? { code: STARTER }
-  setDocument({ code: doc.code || STARTER, style: doc.style || "nova", base: doc.base || "radix" })
+  setDocument({ code: doc.code || STARTER, style: doc.style || "nova", base: doc.base || "radix", center: doc.center })
   try {
     await engine.ready
   } catch (err) {

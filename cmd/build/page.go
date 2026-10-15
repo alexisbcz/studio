@@ -16,6 +16,7 @@ import (
 	nativeselect "github.com/alexisbcz/components/ui/native-select"
 	"github.com/alexisbcz/components/ui/separator"
 	"github.com/alexisbcz/components/ui/tabs"
+	"github.com/alexisbcz/components/ui/toggle"
 	"github.com/alexisbcz/components/ui/textarea"
 	tg "github.com/alexisbcz/components/ui/toggle-group"
 	"github.com/alexisbcz/components/ui/tooltip"
@@ -90,9 +91,9 @@ func header(examples []string) h.Node {
 				nativeselect.Option(h.Value("aria"), "React Aria"),
 			),
 			tg.ToggleGroup(tg.TypeSingle, tg.VariantOutline, tg.SizeSm, tg.Value("desktop"), h.ID("viewport"), h.Aria("label", "Viewport"),
-				tg.Item(tg.Value("desktop"), h.Aria("label", "Desktop"), lucide.Monitor()),
-				tg.Item(tg.Value("tablet"), h.Aria("label", "Tablet"), lucide.Tablet()),
-				tg.Item(tg.Value("mobile"), h.Aria("label", "Mobile"), lucide.Smartphone()),
+				tg.Item(tg.Value("desktop"), h.Data("pick", "desktop"), h.Aria("label", "Desktop"), lucide.Monitor()),
+				tg.Item(tg.Value("tablet"), h.Data("pick", "tablet"), h.Aria("label", "Tablet"), lucide.Tablet()),
+				tg.Item(tg.Value("mobile"), h.Data("pick", "mobile"), h.Aria("label", "Mobile"), lucide.Smartphone()),
 			),
 		),
 		separator.Separator(separator.Vertical, h.Class("mx-1 hidden data-[orientation=vertical]:h-5 md:block")),
@@ -258,9 +259,13 @@ func canvas() h.Node {
 	return h.Main(h.Class("relative flex min-h-0 min-w-0 flex-col bg-muted/50"),
 		h.Div(h.Class("flex h-10 shrink-0 items-center gap-2 border-b bg-background px-2"),
 			tg.ToggleGroup(tg.TypeSingle, tg.SizeSm, tg.Value("select"), h.ID("mode"), h.Aria("label", "Mode"),
-				tg.Item(tg.Value("select"), h.Aria("label", "Select elements"), lucide.MousePointer2(), h.Span(h.Class("text-xs"), "Select")),
-				tg.Item(tg.Value("interact"), h.Aria("label", "Use the page"), lucide.Hand(), h.Span(h.Class("text-xs"), "Interact")),
+				tg.Item(tg.Value("select"), h.Data("pick", "select"), h.Aria("label", "Select elements"), lucide.MousePointer2(), h.Span(h.Class("text-xs"), "Select")),
+				tg.Item(tg.Value("interact"), h.Data("pick", "interact"), h.Aria("label", "Use the page"), lucide.Hand(), h.Span(h.Class("text-xs"), "Interact")),
 			),
+			toggle.Toggle(toggle.SizeSm, h.ID("center"), h.Aria("label", "Center the page"), h.Title("Center the page on the canvas"),
+				lucide.Crosshair(), h.Span(h.Class("text-xs"), "Center"),
+			),
+			separator.Separator(separator.Vertical, h.Class("data-[orientation=vertical]:h-5")),
 			h.Div(h.ID("breadcrumbs"), h.Class("flex min-w-0 flex-1 items-center gap-1 overflow-hidden text-xs text-muted-foreground")),
 			h.Span(h.ID("page-func"), h.Class("font-mono text-xs text-muted-foreground")),
 		),
