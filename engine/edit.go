@@ -253,7 +253,9 @@ func Apply(src string, e Edit) (*Applied, error) {
 		if from < p.skip || to > len(s) || from > to {
 			return nil, errors.New("range out of bounds")
 		}
-		splice(from, to, e.Text)
+		text, imps := requalify(e.Text, e.Imports, imports(p.f))
+		e.Imports = imps
+		splice(from, to, text)
 		sel = -1
 	case "delete":
 		call, parent := p.find(e.Call)

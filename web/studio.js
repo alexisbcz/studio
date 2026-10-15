@@ -143,6 +143,20 @@ const selectionField = CM.StateField.define({
   provide: (f) => CM.EditorView.decorations.from(f),
 })
 
+const errorLine = CM.Decoration.line({ class: "cm-studio-error" })
+const setErrorLine = CM.StateEffect.define()
+const errorField = CM.StateField.define({
+  create: () => CM.Decoration.none,
+  update(deco, tr) {
+    deco = deco.map(tr.changes)
+    for (const e of tr.effects) {
+      if (e.is(setErrorLine)) deco = e.value ? CM.Decoration.set([errorLine.range(tr.state.doc.line(e.value).from)]) : CM.Decoration.none
+    }
+    return deco
+  },
+  provide: (f) => CM.EditorView.decorations.from(f),
+})
+
 const highlight = CM.HighlightStyle.define([
   { tag: CM.tags.keyword, color: "var(--cm-keyword)" },
   { tag: [CM.tags.string, CM.tags.special(CM.tags.string)], color: "var(--cm-string)" },
@@ -159,6 +173,7 @@ const editorTheme = CM.EditorView.theme({
   ".cm-gutters": { backgroundColor: "var(--background)", color: "var(--muted-foreground)", border: "none" },
   ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "color-mix(in oklab, var(--muted) 60%, transparent)" },
   ".cm-studio-selected": { backgroundColor: "oklch(0.62 0.19 260 / 0.14)", borderRadius: "2px" },
+  ".cm-studio-error": { backgroundColor: "color-mix(in oklab, var(--destructive) 12%, transparent)", textDecoration: "underline wavy var(--destructive)", textUnderlineOffset: "3px" },
   "&.cm-focused": { outline: "none" },
   ".cm-cursor": { borderLeftColor: "var(--foreground)" },
   "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection": { backgroundColor: "oklch(0.62 0.19 260 / 0.25) !important" },
@@ -179,6 +194,7 @@ const editor = new CM.EditorView({
       CM.syntaxHighlighting(highlight),
       editorTheme,
       selectionField,
+      errorField,
       CM.EditorView.updateListener.of((u) => {
         if (u.docChanged) {
           state.code = u.state.doc.toString()
@@ -243,6 +259,10 @@ function showError(msg) {
   const el = $("error")
   el.hidden = !msg
   el.textContent = msg ?? ""
+  // "12:5: undefined: x": mark line 12 of the source.
+  const m = msg?.match(/^(\d+):(\d+)/)
+  const line = m ? Number(m[1]) : 0
+  editor.dispatch({ effects: setErrorLine.of(line >= 1 && line <= editor.state.doc.lines ? line : 0) })
 }
 
 function status(text) {
@@ -417,11 +437,50 @@ function selectControl(options, value, onChange, empty) {
   const sel = wrap.querySelector("select") ?? wrap
   sel.replaceChildren()
   if (empty) sel.append(new Option(empty, ""))
-  for (const o of options) sel.append(new Option(o.split(".").pop(), o, false, o === value))
+  // Option names without their shared prefix: Outline for VariantOutline.
+  const names = options.map((o) => o.split(".").pop())
+  const prefix = options.length > 1 && /^[A-Z][a-z]+[A-Z0-9]/.test(names[0]) ? optionLabel(options) : ""
+  options.forEach((o, i) => sel.append(new Option(prefix && names[i].startsWith(prefix) && names[i] !== prefix ? names[i].slice(prefix.length) : names[i], o, false, o === value)))
+  wrap.classList.add("w-full")
+  sel.classList.add("w-full")
   if (empty && !value) sel.value = ""
   sel.addEventListener("change", () => onChange(sel.value))
   return wrap
 }
+
+// STYLE_GROUPS are the inspector's style controls: each sets one class of
+// its group, replacing the others.
+const range = (prefix, values) => values.map((v) => prefix + v)
+const STYLE_GROUPS = [
+  { label: "Display", options: ["block", "inline-block", "flex", "inline-flex", "grid", "hidden"] },
+  { label: "Direction", options: ["flex-row", "flex-col", "flex-row-reverse", "flex-col-reverse"] },
+  { label: "Align items", options: ["items-start", "items-center", "items-end", "items-stretch", "items-baseline"] },
+  { label: "Justify", options: ["justify-start", "justify-center", "justify-end", "justify-between", "justify-around"] },
+  { label: "Gap", options: range("gap-", [0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12]) },
+  { label: "Columns", options: range("grid-cols-", [1, 2, 3, 4, 5, 6, 12]) },
+  { label: "Padding", options: range("p-", [0, 0.5, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16]) },
+  { label: "Margin", options: [...range("m-", [0, 1, 2, 4, 6, 8]), "mx-auto"] },
+  { label: "Width", options: ["w-auto", "w-fit", "w-full", "w-1/2", "w-1/3", "w-2/3", ...range("w-", [24, 32, 48, 64, 80, 96])] },
+  { label: "Max width", options: range("max-w-", ["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "full", "prose"]) },
+  { label: "Height", options: ["h-auto", "h-full", "h-svh", "min-h-svh", ...range("h-", [8, 10, 12, 16, 24, 32, 48, 64])] },
+  { label: "Text size", options: range("text-", ["xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"]) },
+  { label: "Weight", options: range("font-", ["light", "normal", "medium", "semibold", "bold"]) },
+  { label: "Text align", options: ["text-left", "text-center", "text-right", "text-justify"] },
+  { label: "Text color", options: ["text-foreground", "text-muted-foreground", "text-primary", "text-destructive", "text-primary-foreground"] },
+  { label: "Background", options: ["bg-background", "bg-card", "bg-muted", "bg-accent", "bg-primary", "bg-secondary", "bg-destructive", "bg-transparent"] },
+  { label: "Border", options: ["border", "border-0", "border-2", "border-dashed", "border-b", "border-t"] },
+  { label: "Rounded", options: range("rounded-", ["none", "sm", "md", "lg", "xl", "2xl", "3xl", "full"]) },
+  { label: "Shadow", options: ["shadow-none", "shadow-xs", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl"] },
+  { label: "Tracking", options: ["tracking-tighter", "tracking-tight", "tracking-normal", "tracking-wide"] },
+]
+
+// WRAPPERS wrap the selected call: [label, text before, text after].
+const WRAPPERS = [
+  ["Row", 'h.Div(h.Class("flex items-center gap-2"), ', ")"],
+  ["Column", 'h.Div(h.Class("flex flex-col gap-4"), ', ")"],
+  ["Grid", 'h.Div(h.Class("grid grid-cols-2 gap-4"), ', ")"],
+  ["Box", 'h.Div(h.Class("rounded-xl border p-6"), ', ")"],
+]
 
 // optionLabel names a variant from its constants: button.VariantOutline -> Variant.
 function optionLabel(options) {
@@ -491,13 +550,42 @@ async function inspect() {
     parts.push(section("Variants", ...fields))
   }
 
-  // Classes.
+  // Style: designer controls over the Tailwind classes, then the classes.
   const cls = info.args.find((a) => a.kind === "class")
+  const current = (cls?.value ?? "").split(/\s+/).filter(Boolean)
+  const setClasses = (list) => edit({ op: "setClass", call: node.start, text: list.join(" ") })
+  const grid = document.createElement("div")
+  grid.className = "grid grid-cols-2 gap-2"
+  for (const g of STYLE_GROUPS) {
+    const value = current.find((c) => g.options.includes(c)) ?? ""
+    const control = selectControl(g.options, value, (v) => {
+      const rest = current.filter((c) => !g.options.includes(c))
+      setClasses(v ? [...rest, v] : rest)
+    }, "—")
+    grid.append(field(g.label, control))
+  }
+  parts.push(section("Style", grid))
   const classArea = proto("textarea")
   classArea.value = cls?.value ?? ""
   classArea.placeholder = "Tailwind classes"
   commitOnChange(classArea, (v) => edit({ op: "setClass", call: node.start, text: v.trim().replace(/\s+/g, " ") }))
   parts.push(section("Classes", classArea))
+
+  // Wrap the element in a container.
+  const wrap = document.createElement("div")
+  wrap.className = "flex flex-wrap gap-1"
+  for (const [label, before, after] of WRAPPERS) {
+    const b = proto("chip")
+    b.classList.remove("font-mono")
+    b.textContent = label
+    b.addEventListener("click", () => {
+      const text = before + state.code.slice(node.start, node.end) + after
+      edit({ op: "replace", start: node.start, end: node.end, text, imports: [{ name: "h", path: "github.com/alexisbcz/libhtml" }] })
+        .then(() => select(node.start))
+    })
+    wrap.append(b)
+  }
+  parts.push(section("Wrap in", wrap))
 
   // Children.
   const children = info.args.filter((a) => a.kind === "child")

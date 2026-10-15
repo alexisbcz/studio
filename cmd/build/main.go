@@ -148,6 +148,7 @@ func main() {
 @source "` + filepath.ToSlash(dir) + `/style/css";
 @source "./examples.json";
 @source "./palette.json";
+@source "./studio.js";
 `
 		buildCSS(*out, css, "preview.css")
 		// The canvas's own compiler gets the theme and the CSS packages
