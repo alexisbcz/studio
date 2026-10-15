@@ -8,6 +8,8 @@ github.com/alexisbcz/icons v0.0.0-20261015095200-546717184536 h1:9Fo8P39FtcnRwq/
 github.com/alexisbcz/icons v0.0.0-20261015095200-546717184536/go.mod h1:Z+kWIdmkiYU0+1RRR8DlTD/F2xyYojTm/Ybj3Reo0Q0=
 github.com/alexisbcz/libhtml v0.2.0 h1:cr3CzD+uuxTqRBBdL422g5RtdoYDjd8SD8HGBsI7c+U=
 github.com/alexisbcz/libhtml v0.2.0/go.mod h1:JOJiS09pGPBcxX3oW8xE/YuAakWu8Vaiqhi8hngn/v8=
+github.com/alexisbcz/tailwind v0.0.0-20261015084308-7732096c9395 h1:NdM1Cu+cYTJCUxnrW3htgDyHVPmgQHhKmTYPc2upo8Q=
+github.com/alexisbcz/tailwind v0.0.0-20261015084308-7732096c9395/go.mod h1:t/seymMDnEXZblMU+3RgbxdGvopksW7KCyD76JCzLbM=
 github.com/dlclark/regexp2/v2 v2.8.1 h1:I1jbaCbXeOxdVN8z3fb55Mvtgb94/6+Dh0zjmXjKV/0=
 github.com/dlclark/regexp2/v2 v2.8.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
 github.com/dop251/goja v0.0.0-20260911104922-fabc3b8078ad h1:5gT9hQ9h8CplLZfAGgFMcoLqQS6I9T2sZwQOCXy8/3s=

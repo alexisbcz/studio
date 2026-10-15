@@ -179,8 +179,10 @@ func Inspect(src string, start int) (*Inspection, error) {
 		}
 		in.Args = append(in.Args, arg)
 	}
-	// Variants of the call's own package it does not use yet.
-	if path != "" {
+	// Variants of the call's own package it does not use yet, for the
+	// package's main component (button.Button, not card.Title: card.Size
+	// is the Card's).
+	if path != "" && strings.EqualFold(name[strings.Index(name, ".")+1:], pkgNameOf(path)) {
 		alias := name[:strings.Index(name, ".")]
 		types := map[reflect.Type]bool{}
 		for _, v := range packages()[path] {

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Canvas</title>
+    <!-- Classes of the components and examples, compiled ahead of time. -->
+    <link rel="stylesheet" href="preview.css?v={{version}}" />
+    <!-- Classes only the code being edited has: Tailwind's own compiler. -->
+    <style type="text/tailwindcss">
+/*THEME*/
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.0/dist/index.global.js"></script>
+    <script type="module" src="_shadcn/index.js?v={{version}}"></script>
+    <script type="module" src="preview.js?v={{version}}"></script>
+    <style>
+      #studio-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 2147483647; }
+      #studio-overlay .box { position: fixed; border-radius: 2px; }
+      #studio-overlay .hover { outline: 1.5px dashed oklch(0.62 0.19 260 / 0.9); }
+      #studio-overlay .selected { outline: 2px solid oklch(0.62 0.19 260); }
+      #studio-overlay .label { position: fixed; transform: translateY(-100%); padding: 1px 6px; border-radius: 4px 4px 0 0;
+        font: 500 11px/16px ui-monospace, SFMono-Regular, Menlo, monospace; color: white; background: oklch(0.62 0.19 260); white-space: nowrap; }
+      #studio-overlay .drop-inside { background: oklch(0.62 0.19 260 / 0.12); outline: 2px solid oklch(0.62 0.19 260); }
+      #studio-overlay .drop-line { position: fixed; height: 3px; border-radius: 2px; background: oklch(0.62 0.19 260); }
+      html[data-mode="select"] #root, html[data-mode="select"] #root * { cursor: default !important; }
+    </style>
+  </head>
+  <body class="bg-background text-foreground antialiased">
+    <div id="root"></div>
+  </body>
+</html>
